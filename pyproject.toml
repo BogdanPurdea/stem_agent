@@ -8,10 +8,13 @@ dependencies = [
     "debugpy>=1.8.20",
     "langchain>=1.0.0",
     "langchain-ollama>=0.3.0",
+    "langchain-openai>=0.1.0",
     "langgraph>=1.0.0",
     "langsmith>=0.3.0",
+    "tavily-python>=0.3.3",
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.1",
+    "openai>=1.0.0",
 ]
 
 [build-system]
@@ -23,7 +26,6 @@ dev = [
     "anyio>=4.7.0",
     "langgraph-cli[inmem]>=0.4.10",
     "openevals>=0.1.0",
-    "openai>=1.0.0",
     "pytest>=8.3.5",
     "ruff>=0.8.0",
 ]

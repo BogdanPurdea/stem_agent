@@ -9,6 +9,9 @@ help:
 	@echo '  integration-tests   Run integration tests'
 	@echo '  lint                Run Ruff checks'
 	@echo '  format              Format with Ruff'
+	@echo '  create-dataset      Create dataset for evaluation'
+	@echo '  eval                Run STEM Agent evaluation'
+	@echo '  eval-baseline       Run Baseline ReAct Agent evaluation'
 
 install:
 	uv sync --no-dev
@@ -30,3 +33,12 @@ lint:
 
 format:
 	uv run python -m ruff format src tests
+
+create-dataset:
+	uv run python -m evals.create_dataset
+
+eval:
+	uv run python -m evals.run_eval
+
+eval-baseline:
+	uv run python -m evals.run_baseline_eval
