@@ -1,0 +1,33 @@
+[project]
+name = "stem-agent"
+version = "0.1.0"
+description = "Self-adapting STEM Agent — a cognitive pipeline that differentiates its reasoning strategy based on task perception"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "debugpy>=1.8.20",
+    "langchain>=1.0.0",
+    "langchain-ollama>=0.3.0",
+    "langgraph>=1.0.0",
+    "langsmith>=0.3.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.15,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "anyio>=4.7.0",
+    "langgraph-cli[inmem]>=0.4.10",
+    "openevals>=0.1.0",
+    "openai>=1.0.0",
+    "pytest>=8.3.5",
+    "ruff>=0.8.0",
+]
+
+[tool.uv.build-backend]
+module-name = "stem_agent"
+source-include = ["langgraph.json", ".env.example", "Makefile", "tests/**"]
