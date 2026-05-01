@@ -16,7 +16,7 @@ from stem_agent.configuration import CONFIG
 
 @dataclass(frozen=True)
 class SkillInfo:
-    """Lightweight representation of a discovered skill."""
+    """Lightweight representation of a skill."""
 
     name: str
     description: str
@@ -24,9 +24,7 @@ class SkillInfo:
 
 
 # Simple regex for YAML frontmatter between --- fences
-_FRONTMATTER_RE = re.compile(
-    r"^---\s*\n(.*?)\n---", re.DOTALL
-)
+_FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---", re.DOTALL)
 
 
 def _parse_frontmatter(text: str) -> dict[str, str]:
@@ -45,8 +43,34 @@ def _parse_frontmatter(text: str) -> dict[str, str]:
     return result
 
 
+def load_skill_from_directory(directory: str) -> SkillInfo | None:
+    """Load a SkillInfo from a specific directory containing a SKILL.md file.
+
+    Returns None if the directory does not contain a valid SKILL.md.
+    """
+    full_path = os.path.join(directory, "SKILL.md")
+    if not os.path.isfile(full_path):
+        # Try uppercase if needed, though usually it's SKILL.md
+        full_path = os.path.join(directory, "skill.md")
+        if not os.path.isfile(full_path):
+            return None
+
+    try:
+        with open(full_path, encoding="utf-8") as fh:
+            content = fh.read()
+    except OSError:
+        return None
+
+    meta = _parse_frontmatter(content)
+    # Default name to folder name if missing in frontmatter
+    name = meta.get("name", os.path.basename(directory))
+    description = meta.get("description", "No description.")
+
+    return SkillInfo(name=name, description=description, file_path=full_path)
+
+
 def load_skills(directory: str | None = None) -> list[SkillInfo]:
-    """Scan *directory* (default: CONFIG.skills_dir) for SKILL.md files.
+    """Scan directory (default: CONFIG.skills_dir) for SKILL.md files.
 
     Returns a list of :class:`SkillInfo` with name and description extracted
     from the YAML frontmatter.  Files without valid frontmatter are skipped.
@@ -59,21 +83,10 @@ def load_skills(directory: str | None = None) -> list[SkillInfo]:
 
     found: list[SkillInfo] = []
     for root, _dirs, files in os.walk(skills_dir):
-        for fname in files:
-            if fname.upper() == "SKILL.MD":
-                full_path = os.path.join(root, fname)
-                try:
-                    with open(full_path, encoding="utf-8") as fh:
-                        content = fh.read()
-                except OSError:
-                    continue
-
-                meta = _parse_frontmatter(content)
-                name = meta.get("name", os.path.basename(root))
-                description = meta.get("description", "No description.")
-                found.append(
-                    SkillInfo(name=name, description=description, file_path=full_path)
-                )
+        # If this directory has a SKILL.md, load it
+        skill = load_skill_from_directory(root)
+        if skill:
+            found.append(skill)
     return found
 
 
@@ -85,3 +98,12 @@ def skills_description(skills: list[SkillInfo] | None = None) -> str:
         return "(no skills discovered)"
     lines = [f"- **{s.name}**: {s.description}" for s in skills]
     return "\n".join(lines)
+
+
+def get_skill_by_name(name: str, directory: str | None = None) -> SkillInfo | None:
+    """Find a skill by name and return its info."""
+    all_skills = load_skills(directory)
+    for s in all_skills:
+        if s.name == name:
+            return s
+    return None

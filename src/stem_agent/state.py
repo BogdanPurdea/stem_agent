@@ -42,6 +42,10 @@ class PlanStep(BaseModel):
         default_factory=list,
         description="Tool names to use in this step.",
     )
+    skills: list[str] = Field(
+        default_factory=list,
+        description="Skill names to use in this step.",
+    )
 
 
 class ExecutionPlan(BaseModel):
@@ -51,6 +55,10 @@ class ExecutionPlan(BaseModel):
     selected_tools: list[str] = Field(
         default_factory=list,
         description="All unique tool names required for the plan.",
+    )
+    selected_skills: list[str] = Field(
+        default_factory=list,
+        description="All unique skill names required for the plan.",
     )
 
 
@@ -78,6 +86,8 @@ class StemState(TypedDict):
     # Plan output
     plan: list[dict]  # list of serialised PlanStep
     tool_manifest: list[str]  # tool names selected for execution
+    skill_manifest: list[str]  # skill names selected for execution
+    skills_content: str | None  # Loaded markdown content of the selected skills
 
     # Execute output
     execution_result: str | None
