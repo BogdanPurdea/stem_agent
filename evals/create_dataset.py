@@ -3,6 +3,7 @@
 Run once:  python -m evals.create_dataset
 """
 
+from stem_agent.tools import file_reader
 from langsmith import Client
 from dotenv import load_dotenv
 
@@ -11,60 +12,55 @@ def main() -> None:
     client = Client()
 
     dataset = client.create_dataset(
-        dataset_name="STEM Agent v2 Benchmark",
-        description="Tasks spanning simple→complex for testing agent differentiation.",
+        dataset_name="STEM Agent Benchmark",
+        description="Tasks spanning from simple to complex for testing agents.",
     )
 
     examples = [
-        # Simple — single-pass, no tools needed
-        {
-            "inputs": {"task": "Write a Python function that checks if a string is a palindrome."},
-            "outputs": {
-                "expected_complexity": "simple",
-                "reference_answer": (
-                    "A function that reverses the string and compares it to the original, "
-                    "returning True/False."
-                ),
-            },
-        },
-        {
-            "inputs": {"task": "Explain what the SOLID principles are in one paragraph."},
-            "outputs": {
-                "expected_complexity": "simple",
-                "reference_answer": (
-                    "SOLID stands for Single Responsibility, Open/Closed, Liskov Substitution, "
-                    "Interface Segregation, and Dependency Inversion — five design principles "
-                    "for maintainable object-oriented software."
-                ),
-            },
-        },
-        # Medium — benefits from tool use
+        # Simple — tests basic tool use and LLM-as-a-judge edge cases
         {
             "inputs": {"task": "What is the current UTC time? Then calculate 17 * 23."},
             "outputs": {
-                "expected_complexity": "medium",
+                "expected_complexity": "simple",
                 "reference_answer": "The current UTC time and the result 391.",
+                "expected_tools": ["utc_now", "calculator"],
             },
         },
+        # Medium — benefits from tool use (filesystem, web search)
         {
             "inputs": {
                 "task": (
-                    "Read the file 'pyproject.toml' in this project and summarise "
-                    "its dependencies."
+                    "Search the web for the latest documentation on the langgraph openevals and tavily mcp. "
+                    "Summarize how to initialize the client and perform a basic search."
                 )
             },
             "outputs": {
                 "expected_complexity": "medium",
                 "reference_answer": (
-                    "A summary listing the project's Python dependencies from pyproject.toml."
+                    "A summary showing how to access openevals and tavily mcp."
                 ),
+                "expected_tools": ["web_search"],
             },
         },
-        # Complex — requires multi-step reasoning
         {
             "inputs": {
                 "task": (
-                    "Review the following Python code for security vulnerabilities and "
+                    "Review this project's graph.py file. "
+                )
+            },
+            "outputs": {
+                "expected_complexity": "medium",
+                "reference_answer": (
+                    "A code review of the graph.py file, with comments on its efficiency and correctness."
+                ),
+                "expected_tools": ["file_search", "file_reader"],
+            },
+        },
+        # Complex — requires multi-step reasoning, skills, and tools
+        {
+            "inputs": {
+                "task": (
+                    "Find security vulnerabilities and "
                     "suggest fixes:\n\n"
                     "import os, subprocess\n"
                     "def run(cmd):\n"
@@ -77,35 +73,51 @@ def main() -> None:
                 "expected_complexity": "complex",
                 "reference_answer": (
                     "The code has a command-injection vulnerability because it passes "
-                    "unsanitised user input to subprocess with shell=True.  Fixes include "
+                    "unsanitized user input to subprocess with shell=True.  Fixes include "
                     "using subprocess.run with a list of args and shell=False, input "
                     "validation, and least-privilege execution."
                 ),
+                "expected_tools": [],
             },
         },
         {
             "inputs": {
                 "task": (
-                    "Design a microservice architecture for a real-time chat application "
-                    "that supports 10k concurrent users.  Include service boundaries, "
-                    "communication protocols, and a data-storage strategy."
+                    "Design an architecture and implementation plan for a new LangGraph agent "
+                    "that acts as a customer support bot. It needs to route queries to either "
+                    "a billing node, a technical support node, or a human escalation node."
                 )
             },
             "outputs": {
                 "expected_complexity": "complex",
                 "reference_answer": (
-                    "An architecture with separate services for auth, messaging, presence, "
-                    "and notifications using WebSockets for real-time delivery, a message "
-                    "broker (e.g. Kafka/Redis Streams) for inter-service comms, and a "
-                    "combination of a relational DB for users and a time-series/NoSQL store "
-                    "for messages."
+                    "An architecture plan detailing a StateGraph with nodes for routing, billing, "
+                    "tech support, and human-in-the-loop. Includes state definitions and conditional edges."
                 ),
+                "expected_tools": [],
+            },
+        },
+        {
+            "inputs": {
+                "task": (
+                    "Perform a code review and suggest refactoring for a massive monolithic "
+                    "Python file containing both database access, HTML rendering, and business logic. "
+                    "How should this be structured?"
+                )
+            },
+            "outputs": {
+                "expected_complexity": "complex",
+                "reference_answer": (
+                    "If such a file exists suggestions to apply the Single Responsibility Principle and MVC/Clean Architecture, "
+                    "separating the code into models (DB), views (HTML), and controllers (business logic)."
+                ),
+                "expected_tools": ["file_search", "file_reader"],
             },
         },
     ]
 
     client.create_examples(dataset_id=dataset.id, examples=examples)
-    print(f"✅ Created dataset '{dataset.name}' with {len(examples)} examples.")
+    print(f"Created dataset '{dataset.name}' with {len(examples)} examples.")
 
 
 if __name__ == "__main__":

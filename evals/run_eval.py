@@ -10,8 +10,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 from langsmith.evaluation import evaluate
 from stem_agent.graph import graph
-from evals.evaluators import correctness_evaluator, differentiation_evaluator
-from dotenv import load_dotenv
+from evals.evaluators import correctness_evaluator, differentiation_evaluator, tool_efficiency_evaluator
 
 def target(inputs: dict) -> dict:
     """Invoke the STEM Agent graph and return outputs for the evaluator."""
@@ -28,18 +27,24 @@ def target(inputs: dict) -> dict:
 
     result = graph.invoke(initial_state)
 
+    actual_tools = []
+    for msg in result.get("messages", []):
+        if hasattr(msg, "tool_calls") and msg.tool_calls:
+            for tc in msg.tool_calls:
+                actual_tools.append(tc["name"])
+
     return {
         "result": result.get("execution_result"),
         "perceived_complexity": (result.get("signal") or {}).get("complexity"),
+        "actual_tools": actual_tools,
     }
 
 
 def main() -> None:
-    load_dotenv()
     evaluate(
         target,
-        data="STEM Agent v2 Benchmark",
-        evaluators=[correctness_evaluator, differentiation_evaluator],
+        data="STEM Agent Benchmark",
+        evaluators=[correctness_evaluator, differentiation_evaluator, tool_efficiency_evaluator],
         experiment_prefix="stem-eval",
         max_concurrency=2,
     )

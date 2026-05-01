@@ -9,7 +9,6 @@ from __future__ import annotations
 from openevals.llm import create_llm_as_judge
 from openevals.prompts import CORRECTNESS_PROMPT
 
-
 # ---------------------------------------------------------------------------
 # 1. Correctness — LLM-as-judge via openevals
 # ---------------------------------------------------------------------------
@@ -53,3 +52,37 @@ def differentiation_evaluator(
         "score": 1.0 if match else 0.0,
         "comment": f"expected={expected}, actual={actual}",
     }
+
+# ---------------------------------------------------------------------------
+# 3. Tool Efficiency — precision and recall on tool selection
+# ---------------------------------------------------------------------------
+
+def tool_efficiency_evaluator(
+    inputs: dict, outputs: dict, reference_outputs: dict
+) -> dict:
+    """Calculate Precision and Recall for tool usage.
+    Precision = (Correct Tools Called) / (Total Tools Called)
+    Recall = (Correct Tools Called) / (Total Expected Tools)
+    """
+    expected = set((reference_outputs or {}).get("expected_tools", []))
+    actual = set((outputs or {}).get("actual_tools", []))
+
+    # If no tools were expected and no tools were called, perfect score
+    if not expected and not actual:
+        return {"key": "tool_precision", "score": 1.0, "comment": "No tools needed, none called."}
+
+    correct_tools_called = len(actual.intersection(expected))
+
+    # Precision
+    precision = correct_tools_called / len(actual) if len(actual) > 0 else 1.0
+    
+    # Recall
+    recall = correct_tools_called / len(expected) if len(expected) > 0 else 1.0
+
+    # We can return multiple metrics by returning a list of dicts, or just return one combined.
+    # LangSmith supports returning a dictionary or list of metric dicts.
+    return [
+        {"key": "tool_precision", "score": float(precision), "comment": f"Expected: {expected}, Actual: {actual}"},
+        {"key": "tool_recall", "score": float(recall), "comment": f"Expected: {expected}, Actual: {actual}"}
+    ]
+
