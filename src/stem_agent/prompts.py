@@ -20,7 +20,7 @@ Given the user's message, extract the following structured information:
 - **intent**: a one-sentence summary of what the user wants.
 - **hints**: a list of keywords or contextual signals from the prompt.
 
-Respond ONLY with the requested structured output.
+Respond in a JSON structured output.
 """
 
 # ---------------------------------------------------------------------------
@@ -35,6 +35,9 @@ You are a planning system for a software-development AI agent.
 - **Intent**: {intent}
 - **Reasoning strategy**: {reasoning_method}
 
+## Available domains
+{domains_section}
+
 ## Available tools
 {tools_section}
 
@@ -42,13 +45,15 @@ You are a planning system for a software-development AI agent.
 {skills_section}
 
 ## Instructions
-Create a concise, ordered execution plan.  For each step specify:
+Create a concise, ordered execution plan. For each step specify:
 - step_number (int)
 - description (str)
 - tools (list of tool names to use, or empty list)
+- skills (list of skills to use, or empty list)
 
-Select ONLY tools that are genuinely needed.
-Respond in a JSON structured output containing the list of steps and selected_tools.
+Prioritize using the most relevant skills and tools to solve the task.
+For example, for constantly changing data, prioritize using tools to get the latest information, such a web search or file search.
+Respond in a JSON structured output containing the list of steps, selected tools and selected skills.
 """
 
 # ---------------------------------------------------------------------------
@@ -61,12 +66,16 @@ EXECUTE_PROMPT_TEMPLATE = """\
 ## Reasoning strategy
 Use **{reasoning_method}** reasoning.
 
+## Skills & Procedures
+Below are the specific technical skills and procedures you must follow for this task.
+{skills_block}
+
 ## Plan
 {plan_block}
 
-Follow the plan step-by-step.  Use the provided tools when the plan calls for them.
+Follow the plan step-by-step. Use the provided tools when the plan calls for them.
 When you have completed all steps (or the task is simple enough to answer directly),
-return your final answer as plain text with NO tool calls.
+return your final answer as plain text with no tool calls.
 """
 
 # ---------------------------------------------------------------------------

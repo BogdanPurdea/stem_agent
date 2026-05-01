@@ -6,7 +6,7 @@ from langchain.chat_models import init_chat_model
 from langchain_core.messages import SystemMessage
 
 from stem_agent.configuration import CONFIG
-from stem_agent.prompts import PLAN_PROMPT_TEMPLATE
+from stem_agent.prompts import PLAN_PROMPT_TEMPLATE, PERSONAS
 from stem_agent.skills import load_skills, skills_description
 from stem_agent.state import ExecutionPlan, StemState
 from stem_agent.tools import tools_description
@@ -22,6 +22,7 @@ def plan(state: StemState) -> dict:
         domain=signal.get("domain", "General"),
         intent=signal.get("intent", "unknown"),
         reasoning_method=strategy.get("reasoning_method", "react"),
+        domains_section=PERSONAS.keys(),
         tools_section=tools_description(),
         skills_section=skills_description(load_skills()),
     )
@@ -30,8 +31,8 @@ def plan(state: StemState) -> dict:
     result: ExecutionPlan = llm.invoke(
         [SystemMessage(content=prompt_text)] + list(state["messages"])
     )
-    print(result)
     return {
         "plan": [step.model_dump() for step in result.steps],
         "tool_manifest": result.selected_tools,
+        "skill_manifest": result.selected_skills,
     }

@@ -42,6 +42,7 @@ def adapt(state: StemState) -> dict:
         persona_block=persona,
         reasoning_method=reasoning_method,
         plan_block="(plan will be injected after the Plan node)",
+        skills_block="(skills will be injected after the Plan node)",
     )
 
     return {
