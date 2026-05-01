@@ -77,16 +77,57 @@ def file_reader(path: str) -> str:
 
 
 @tool
+def file_search(filename: str, directory: str = ".") -> str:
+    """Recursively search for a file by name starting from a directory.
+
+    Returns the absolute path(s) of the file if found, or a 'not found' message.
+    """
+    resolved_dir = os.path.abspath(directory)
+    if not os.path.isdir(resolved_dir):
+        return f"Error: '{directory}' is not a directory."
+
+    found_paths = []
+    for root, _, files in os.walk(resolved_dir):
+        if filename in files:
+            found_paths.append(os.path.join(root, filename))
+
+    if not found_paths:
+        return f"File '{filename}' not found in '{directory}' or its subdirectories."
+
+    return "\n".join(found_paths)
+
+
+
+@tool
 def web_search(query: str) -> str:
     """Search the web for information related to *query*.
 
-    NOTE: This is a **stub** for the MVP.  Replace the body with a real
-    search API integration (e.g. Tavily, SerpAPI) when ready.
+    Uses the Tavily search engine to return factual and up-to-date information.
     """
-    return (
-        f"[web_search stub] No real results — query was: '{query}'.  "
-        "Wire this tool to a search API for production use."
-    )
+    from stem_agent.configuration import CONFIG
+
+    if not CONFIG.tavily_api_key:
+        return "Error: TAVILY_API_KEY is not configured in the environment."
+
+    try:
+        from tavily import TavilyClient
+
+        client = TavilyClient(api_key=CONFIG.tavily_api_key)
+        response = client.search(query=query, search_depth="basic")
+
+        results = response.get("results", [])
+        if not results:
+            return f"No results found for query: '{query}'"
+
+        formatted_results = []
+        for r in results[:3]:  # Return top 3 results for brevity
+            formatted_results.append(
+                f"- **{r.get('title', 'Unknown')}**: {r.get('content', '')} (Source: {r.get('url', '')})"
+            )
+
+        return "\n".join(formatted_results)
+    except Exception as exc:  # noqa: BLE001
+        return f"Error executing web search: {exc}"
 
 
 # ---------------------------------------------------------------------------
@@ -94,7 +135,7 @@ def web_search(query: str) -> str:
 # only the tools selected during planning.
 # ---------------------------------------------------------------------------
 
-ALL_TOOLS = [utc_now, calculator, file_reader, web_search]
+ALL_TOOLS = [utc_now, calculator, file_reader, web_search, file_search]
 
 TOOL_REGISTRY: dict[str, Any] = {t.name: t for t in ALL_TOOLS}
 
