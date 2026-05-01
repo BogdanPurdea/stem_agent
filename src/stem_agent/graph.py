@@ -9,15 +9,23 @@ from __future__ import annotations
 from langgraph.graph import END, START, StateGraph
 
 from stem_agent.nodes.adapt import adapt
-from stem_agent.nodes.execute import execute, handle_tools
+from stem_agent.nodes.execute import execute
 from stem_agent.nodes.perceive import perceive
 from stem_agent.nodes.plan import plan
+from stem_agent.nodes.load_skills import load_skills
+from stem_agent.nodes.call_tool import call_tool
 from stem_agent.state import StemState
 
 
 # ---------------------------------------------------------------------------
 # Routing functions
 # ---------------------------------------------------------------------------
+
+def _route_after_plan(state: StemState) -> str:
+    """Decide whether to loop back for tool handling or finish."""
+    if not state.get("skill_manifest"):
+        return "execute"
+    return "load_skills"
 
 
 def _route_after_execute(state: StemState) -> str:
@@ -27,7 +35,7 @@ def _route_after_execute(state: StemState) -> str:
 
     last_msg = state["messages"][-1]
     if getattr(last_msg, "tool_calls", None):
-        return "handle_tools"
+        return "call_tool"
 
     return END
 
@@ -52,23 +60,28 @@ def build_graph() -> StateGraph:
     builder.add_node("perceive", perceive)
     builder.add_node("adapt", adapt)
     builder.add_node("plan", plan)
+    builder.add_node("load_skills", load_skills)
     builder.add_node("execute", execute)
-    builder.add_node("handle_tools", handle_tools)
+    builder.add_node("call_tool", call_tool)
 
     # --- Edges: linear pipeline ---
     builder.add_edge(START, "perceive")
     builder.add_edge("perceive", "adapt")
     builder.add_edge("adapt", "plan")
-    builder.add_edge("plan", "execute")
-
-    # --- Edges: execute ↔ handle_tools loop ---
+    builder.add_edge("load_skills","execute")
+    # --- Edges: plan ↔ skills ↔ execute loop ---
+    builder.add_conditional_edges(
+        "plan",
+        _route_after_plan,
+        ["load_skills", "execute"],
+    )
     builder.add_conditional_edges(
         "execute",
         _route_after_execute,
-        ["handle_tools", END],
+        ["call_tool", END],
     )
     builder.add_conditional_edges(
-        "handle_tools",
+        "call_tool",
         _route_after_tools,
         ["execute", END],
     )

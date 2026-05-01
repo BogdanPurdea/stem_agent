@@ -4,20 +4,29 @@ These tests require a running Ollama instance with the configured model.
 """
 
 import os
-
-from dotenv import load_dotenv
-
-load_dotenv()
-
 import pytest
-
+from dotenv import load_dotenv
 from stem_agent.graph import graph
 
+from stem_agent.configuration import CONFIG
+
+load_dotenv()
 pytestmark = pytest.mark.anyio
 
-if not os.getenv("OLLAMA_BASE_URL", "").startswith("http"):
+
+# Basic check to skip if environment is not set up
+def _should_skip() -> bool:
+    model = CONFIG.model
+    if "ollama" in model and not os.getenv("OLLAMA_BASE_URL", "").startswith("http"):
+        return True
+    if "openai" in model and not os.getenv("OPENAI_API_KEY"):
+        return True
+    return False
+
+
+if _should_skip():
     pytest.skip(
-        "Set OLLAMA_BASE_URL to run integration tests.",
+        "Missing environment configuration for the active model.",
         allow_module_level=True,
     )
 
