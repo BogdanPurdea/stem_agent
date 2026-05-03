@@ -55,8 +55,29 @@ def test_adapt_simple() -> None:
         "circuit_breaker_tripped": False,
     }
     result = adapt(state)
-    assert result["strategy"]["reasoning_method"] == "chain_of_thought"
-    assert result["strategy"]["max_iterations"] == 1
+    assert result["strategy"]["reasoning_method"] == "react"
+    assert result["strategy"]["max_iterations"] == 3
+
+
+def test_adapt_medium() -> None:
+    state: StemState = {
+        "messages": [],
+        "signal": {
+            "domain": "Architecture",
+            "complexity": "medium",
+            "intent": "design",
+            "hints": [],
+        },
+        "strategy": None,
+        "plan": [],
+        "tool_manifest": [],
+        "execution_result": None,
+        "consecutive_failures": 0,
+        "circuit_breaker_tripped": False,
+    }
+    result = adapt(state)
+    assert result["strategy"]["reasoning_method"] == "react"
+    assert result["strategy"]["max_iterations"] == 5
 
 
 def test_adapt_complex() -> None:
