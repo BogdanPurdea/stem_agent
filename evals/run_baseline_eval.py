@@ -42,6 +42,8 @@ def target(inputs: dict) -> dict:
         "result": final_message,
         "perceived_complexity": None,  # Baseline agent does not differentiate
         "actual_tools": actual_tools,
+        "tool_manifest": [t.name for t in ALL_TOOLS],
+        "skills_content": "(no specialized skills provided to baseline agent)",
     }
 
 

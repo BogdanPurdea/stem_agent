@@ -7,14 +7,39 @@ Each evaluator follows the LangSmith signature:
 from __future__ import annotations
 
 from openevals.llm import create_llm_as_judge
-from openevals.prompts import CORRECTNESS_PROMPT
 
 # ---------------------------------------------------------------------------
 # 1. Correctness — LLM-as-judge via openevals
 # ---------------------------------------------------------------------------
 
+CUSTOM_CORRECTNESS_PROMPT = """\
+You are an expert software engineer judging the correctness of an AI agent's response.
+
+## Input Task
+{task}
+
+## Reference Answer
+{reference_answer}
+
+## Agent Execution Context
+- **Tools Available**: {tool_manifest}
+- **Skills Content**: 
+{skills_content}
+
+## Agent Output
+{result}
+
+## Evaluation Criteria
+Does the agent's response accurately address the user task and match the substance of the reference answer?
+Note that the agent had limited tools and specific technical skills (provided above). Evaluate its correctness based on what it was able to do with those resources.
+
+Respond with:
+- **score**: 1 if correct, 0.5 if partially correct, 0 if incorrect.
+- **comment**: A brief explanation of your decision.
+"""
+
 _correctness_judge = create_llm_as_judge(
-    prompt=CORRECTNESS_PROMPT,
+    prompt=CUSTOM_CORRECTNESS_PROMPT,
     model="openai:gpt-4o",
     feedback_key="correctness",
 )
@@ -24,11 +49,13 @@ def correctness_evaluator(
     inputs: dict, outputs: dict, reference_outputs: dict
 ) -> dict:
     """Score whether the agent's answer is correct relative to the reference."""
-    return _correctness_judge(
-        inputs=inputs,
-        outputs=outputs,
-        reference_outputs=reference_outputs,
-    )
+    # Merge all data into a single context for the prompt
+    context = {
+        **inputs,
+        **outputs,
+        **(reference_outputs or {}),
+    }
+    return _correctness_judge(**context)
 
 
 # ---------------------------------------------------------------------------

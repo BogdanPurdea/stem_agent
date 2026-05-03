@@ -37,6 +37,8 @@ def target(inputs: dict) -> dict:
         "result": result.get("execution_result"),
         "perceived_complexity": (result.get("signal") or {}).get("complexity"),
         "actual_tools": actual_tools,
+        "tool_manifest": result.get("tool_manifest", []),
+        "skills_content": result.get("skills_content", ""),
     }
 
 
