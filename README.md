@@ -2,6 +2,13 @@
 
 This **Stem Agent** is an autonomous software-development agent inspired by the biological metaphor of a stem cell. Just as a stem cell differentiates based on environmental signals, this agent attempts to adapt its persona, reasoning strategy, and toolset based on the perceived domain and complexity of the task.
 
+## Deliverables
+
+- This repository contains the runnable code.
+- Setup instructions can be found [here](#setup).
+- [Writeup](Writeup.pdf)
+- [Evaluation Summary](evaluation_summary.md)
+
 ## The Architecture
 
 The agent operates through a deterministic pipeline that transforms the initial task into a specialized execution context:
