@@ -1,6 +1,8 @@
 # STEM Agent
 The STEM agent follows a stem-cell-inspired pattern: it first interprets task signals, then adapts its reasoning mode and persona, plans a task-specific approach, and executes with selective tool/skill use. Safeguards can halt execution if tool failures repeat.
 
+![STEM Agent Graph](../visual/graph_visualization.png)
+
 ## Current architecture
 The runtime is a LangGraph state machine with this flow:
 1. Perceive

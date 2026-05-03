@@ -17,7 +17,7 @@ __pycache__/
 *.egg-info/
 build/
 dist/
-docs/
+docs
 
 # LangGraph and Agent local state
 .langgraph_api/
