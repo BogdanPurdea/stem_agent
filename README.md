@@ -1,60 +1,96 @@
-# Simple Agent Template
+# STEM Agent: Self-Adapting Cognitive Pipeline
 
-Minimal deployment template for a LangChain agent built with `create_agent(...)`.
+The **STEM Agent** is an autonomous software-development agent inspired by the biological metaphor of a stem cell. Just as a stem cell differentiates based on environmental signals, this agent dynamically adapts its persona, reasoning strategy, and toolset based on the perceived domain and complexity of the task.
 
-## What this template gives you
+## The Architecture
 
-- A deployable LangGraph entrypoint at `src/simple_agent/graph.py`.
-- Two small tools (`utc_now`, `calculator`) for predictable local behavior.
-- `langgraph.json` configured for LangSmith/LangGraph deployment.
-- A `uv`-managed local workflow with a small `Makefile` wrapper and starter tests.
+The agent operates through a deterministic pipeline that transforms the initial task into a specialized execution context:
 
-## Quickstart
+1.  **Perceive**: Extracts environmental signals (domain, complexity, intent) from the user prompt.
+2.  **Adapt**: Determines the optimal reasoning strategy (e.g., ReAct) and persona (e.g., Security Analyst) for the task.
+3.  **Plan**: Drafts a step-by-step execution blueprint and selects the required tools and specialized skills.
+4.  **Load Skills**: Deterministically loads the full markdown content of technical procedures (Skills) from the registry.
+5.  **Execute**: Invokes the LLM within the specialized context to achieve the goal via a tool-calling loop.
+6.  **Call Tool**: Executes actions and manages a circuit-breaker safeguard to prevent infinite loops on failure.
 
-1. Sync the project with `uv`:
+---
 
+## Setup
+
+### 1. Prerequisites
+- [uv](https://github.com/astral-sh/uv) installed on your machine.
+- OpenAI API Key.
+- Tavily API Key (for the web search tool, free tier available at https://tavily.com).
+
+### 2. Installation
+Sync the project dependencies:
 ```bash
-uv sync --dev
+make dev
 ```
 
-2. Configure environment:
-
+### 3. Configuration
+Copy the template and fill in your API keys:
 ```bash
 cp .env.example .env
 ```
+Ensure your `.env` contains:
+- `OPENAI_API_KEY`
+- `TAVILY_API_KEY`
+- `LANGSMITH_API_KEY` (optional, for tracing and evaluation)
 
-3. Run locally:
+---
 
+## Usage
+
+### Running the Local Agent
+Start the LangGraph development server to interact with the agent via the Studio:
 ```bash
-uv run langgraph dev
-```
-
-Optional `make` wrappers:
-
-```bash
-make dev
 make run
 ```
 
-## Tests and lint
+### Adding New Skills
+The agent can "specialize" by reading markdown files in the `src/skills/` directory. Each skill should be a directory containing a `SKILL.md` file with YAML frontmatter.
 
+---
+
+## Evaluation Pipeline
+
+The project includes a minimal evaluation suite to compare the STEM Agent against a standard ReAct baseline.
+
+1.  **Create Dataset**: Upload the benchmark dataset to LangSmith.
+    ```bash
+    make create-dataset
+    ```
+2.  **Run STEM Evaluation**: Run the pipeline and score using `openevals`.
+    ```bash
+    make eval
+    ```
+3.  **Run Baseline Evaluation**: Run the standard ReAct agent for comparison.
+    ```bash
+    make eval-baseline
+    ```
+
+---
+
+## Quality Assurance
+
+### Testing
+Run unit and integration tests:
 ```bash
 make test
 make integration-tests
+```
+
+### Linting & Formatting
+Ensure code quality with Ruff:
+```bash
 make lint
 make format
 ```
 
-Integration tests are skipped unless `ANTHROPIC_API_KEY` is set.
+---
 
-## Deploy to LangSmith
-
-1. Push this template to a Git repository.
-2. In LangSmith, create a new Deployment from that repo.
-3. Set required environment variables (`ANTHROPIC_API_KEY`, optionally `LANGSMITH_API_KEY`).
-4. Deploy using `langgraph.json` defaults.
-
-## Reference docs
-
-- LangChain quickstart: https://docs.langchain.com/oss/python/langchain/quickstart
-- LangChain deployment: https://docs.langchain.com/oss/python/langchain/deploy
+## Reference Documentation
+- [Architecture Deep Dive](docs/architecture.md)
+- [Evaluation Strategy](docs/agent_evaluation_pipeline.md)
+- [Development Log](docs/writeup.md)
