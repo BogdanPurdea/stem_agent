@@ -1,6 +1,6 @@
-# STEM Agent: Self-Adapting Cognitive Pipeline
+# Stem Agent: Self-Adapting Cognitive Pipeline
 
-The **STEM Agent** is an autonomous software-development agent inspired by the biological metaphor of a stem cell. Just as a stem cell differentiates based on environmental signals, this agent dynamically adapts its persona, reasoning strategy, and toolset based on the perceived domain and complexity of the task.
+The **Stem Agent** is an autonomous software-development agent inspired by the biological metaphor of a stem cell. Just as a stem cell differentiates based on environmental signals, this agent dynamically adapts its persona, reasoning strategy, and toolset based on the perceived domain and complexity of the task.
 
 ## The Architecture
 
@@ -91,6 +91,6 @@ make format
 ---
 
 ## Reference Documentation
-- [Architecture Deep Dive](docs/architecture.md)
-- [Evaluation Strategy](docs/agent_evaluation_pipeline.md)
-- [Development Log](docs/writeup.md)
+- [Writeup](writeup.md)
+- [Evaluation Experiments](https://smith.langchain.com/public/d15b97f0-2119-4354-a901-1fb6744703d0/d)
+- [Architecture Docs](src/architecture.md)
