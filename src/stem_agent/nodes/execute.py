@@ -40,7 +40,12 @@ def _format_plan(plan: list[dict]) -> str:
 
 def execute(state: StemState) -> dict:
     """Call the LLM with the strategy-specific system prompt and bound tools."""
-    # Short-circuit if the circuit breaker already tripped
+    strategy = state.get("strategy") or {}
+    max_iters = strategy.get("max_iterations", 5)
+    current_iters = state.get("iteration_count", 0)
+
+
+    # Halt if the circuit breaker tripped
     if state.get("circuit_breaker_tripped"):
         return {
             "execution_result": (
@@ -49,21 +54,39 @@ def execute(state: StemState) -> dict:
             )
         }
 
-    strategy = state.get("strategy") or {}
+    # Halt if we reached the max iteration budget
+    if current_iters >= max_iters:
+        return {
+            "execution_result": (
+                f"Execution halted: reached maximum iteration budget of {max_iters}."
+            )
+        }
+
     signal = state.get("signal") or {}
     plan = state.get("plan") or []
 
-    # Build a one-shot system prompt incorporating persona + plan
-    domain = signal.get("domain", "General")
-    persona = PERSONAS.get(domain, PERSONAS["General"])
-    reasoning_method = strategy.get("reasoning_method", "react")
-
-    system_prompt = EXECUTE_PROMPT_TEMPLATE.format(
-        persona_block=persona,
-        reasoning_method=reasoning_method,
-        skills_block=state.get("skills_content") or "(no skills provided)",
-        plan_block=_format_plan(plan),
-    )
+    # Use the system prompt pre-built by the Adapt node
+    system_prompt = strategy.get("system_prompt")
+    if system_prompt:
+        # Inject the actual plan and skills content into the pre-built prompt
+        system_prompt = system_prompt.replace(
+            "(plan will be injected after the Plan node)", _format_plan(plan)
+        )
+        system_prompt = system_prompt.replace(
+            "(skills will be injected after the Plan node)",
+            state.get("skills_content") or "(no skills provided)",
+        )
+    else:
+        # Fallback (should not be reached in normal flow)
+        domain = signal.get("domain", "General")
+        persona = PERSONAS.get(domain, PERSONAS["General"])
+        reasoning_method = strategy.get("reasoning_method", "react")
+        system_prompt = EXECUTE_PROMPT_TEMPLATE.format(
+            persona_block=persona,
+            reasoning_method=reasoning_method,
+            skills_block=state.get("skills_content") or "(no skills provided)",
+            plan_block=_format_plan(plan),
+        )
 
     # Construct local message list (system prompt is NOT stored in state)
     local_messages = [SystemMessage(content=system_prompt)] + list(state["messages"])
@@ -76,7 +99,10 @@ def execute(state: StemState) -> dict:
 
     response = llm.invoke(local_messages)
 
-    updates: dict = {"messages": [response]}
+    updates: dict = {
+        "messages": [response],
+        "iteration_count": current_iters + 1,
+    }
 
     # If the LLM produced no tool calls, treat its content as the final answer
     if not getattr(response, "tool_calls", None):

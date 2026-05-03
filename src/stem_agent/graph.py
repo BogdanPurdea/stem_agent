@@ -33,11 +33,19 @@ def _route_after_execute(state: StemState) -> str:
     if state.get("circuit_breaker_tripped"):
         return END
 
+    strategy = state.get("strategy") or {}
+    max_iters = strategy.get("max_iterations", 5)
+    current_iters = state.get("iteration_count", 0)
+
+    if current_iters >= max_iters:
+        return END
+
     last_msg = state["messages"][-1]
     if getattr(last_msg, "tool_calls", None):
         return "call_tool"
 
     return END
+
 
 
 def _route_after_tools(state: StemState) -> str:

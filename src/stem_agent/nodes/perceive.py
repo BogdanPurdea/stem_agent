@@ -18,4 +18,10 @@ def perceive(state: StemState) -> dict:
         [SystemMessage(content=PERCEIVE_PROMPT)] + list(state["messages"])
     )
 
-    return {"signal": result.model_dump()}
+    return {
+        "signal": result.model_dump(),
+        "consecutive_failures": 0,
+        "iteration_count": 0,
+        "circuit_breaker_tripped": False,
+    }
+

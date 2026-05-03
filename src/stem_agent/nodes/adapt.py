@@ -14,13 +14,13 @@ from stem_agent.state import StemState
 # ---------------------------------------------------------------------------
 
 _COMPLEXITY_TO_METHOD: dict[str, str] = {
-    "simple": "chain_of_thought",
+    "simple": "react",
     "medium": "react",
     "complex": "reflexion",
 }
 
 _COMPLEXITY_TO_ITERS: dict[str, int] = {
-    "simple": 1,
+    "simple": 3,
     "medium": 5,
     "complex": 10,
 }

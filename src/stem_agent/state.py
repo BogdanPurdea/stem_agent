@@ -94,4 +94,6 @@ class StemState(TypedDict):
 
     # Safeguards
     consecutive_failures: int
+    iteration_count: int
     circuit_breaker_tripped: bool
+
